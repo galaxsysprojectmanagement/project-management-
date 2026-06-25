@@ -282,6 +282,15 @@ body{font-family:'Segoe UI',sans-serif;background:#ede9f8;color:#1a1a2e;min-heig
 .ibtn.ipicked{background:#e8e5ff;outline:2px solid var(--purple);outline-offset:1px;transform:scale(1.1)}
 .btn-cancel{padding:9px 20px;border:1.5px solid var(--border);border-radius:10px;background:#fff;color:var(--muted);cursor:pointer;font-size:13px;font-weight:600}
 .btn-save{padding:9px 20px;border:none;border-radius:10px;background:linear-gradient(135deg,#7b68ee,#a78bfa);color:#fff;cursor:pointer;font-size:13px;font-weight:700;box-shadow:0 2px 8px rgba(123,104,238,.3)}
+.publish-btn{font-size:12px;color:#fff;background:linear-gradient(135deg,#0077b6,#0096c7);cursor:pointer;padding:5px 14px;border:none;border-radius:20px;font-weight:700;transition:all .2s;box-shadow:0 2px 8px rgba(0,119,182,.35);display:flex;align-items:center;gap:5px;letter-spacing:.2px}
+.publish-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,119,182,.45)}
+.publish-btn:disabled{opacity:.65;cursor:default;transform:none}
+.gh-cfg-btn{background:none;border:none;color:#ffffffaa;cursor:pointer;font-size:15px;padding:4px 6px;border-radius:8px;transition:all .15s;line-height:1}
+.gh-cfg-btn:hover{color:#fff;background:#ffffff18}
+.gh-status{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:.3px}
+.gh-status.ok{background:#f0fff4;color:#27ae60}
+.gh-status.err{background:#fff0f0;color:#e74c3c}
+.gh-status.busy{background:#f0f2ff;color:#7b68ee}
 </style>
 </head>
 <body>
@@ -290,7 +299,34 @@ body{font-family:'Segoe UI',sans-serif;background:#ede9f8;color:#1a1a2e;min-heig
   <div class="divider"></div>
   <div class="top-title" id="topTitle">Q3/26 Roadmap</div>
   <div class="undo-btn" id="undoBtn" onclick="undoDelete()">↩ Undo delete</div>
+  <span id="ghStatus" style="display:none"></span>
+  <button class="publish-btn" id="publishBtn" onclick="publishToGitHub(this)">⬆ Publish</button>
+  <button class="gh-cfg-btn" onclick="openGHModal()" title="GitHub settings">⚙</button>
   <div class="back-btn" id="backBtn" style="display:none" onclick="goBack()">← Back</div>
+</div>
+
+<div class="modal-overlay" id="ghModal" style="display:none" onclick="if(event.target===this)closeGHModal()">
+  <div class="modal" style="max-width:480px">
+    <h2>⚙ GitHub Connection</h2>
+    <div class="modal-field">
+      <label>Personal Access Token</label>
+      <input id="gh-token" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+      <div style="font-size:11px;color:#aab0c6;margin-top:5px">Requires <strong>repo</strong> scope (or <strong>contents: write</strong> for fine-grained tokens). Stored in your browser only — never sent anywhere except GitHub.</div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field"><label>Owner</label><input id="gh-owner" placeholder="username or org"></div>
+      <div class="modal-field"><label>Repository</label><input id="gh-repo" placeholder="repo-name"></div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field"><label>File path in repo</label><input id="gh-path" placeholder="roadmap.html"></div>
+      <div class="modal-field"><label>Branch</label><input id="gh-branch" placeholder="main"></div>
+    </div>
+    <div id="ghModalErr" style="display:none;font-size:12px;color:#e74c3c;margin-top:8px;padding:8px 12px;background:#fff0f0;border-radius:8px"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeGHModal()">Cancel</button>
+      <button class="btn-save" onclick="saveGHSettings()">✓ Save</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="addModal" style="display:none" onclick="if(event.target===this)closeModal()">
@@ -523,14 +559,20 @@ function defPhases(){return[
   {label:'Infosec',sub:'Release',startVal:'2026-10-07',endVal:'2026-11-03',actualEndVal:'',color:'#f6a623',icon:'🚀',statusKey:'notstarted',comments:'',subtasks:[]},
 ];}
 
+/* BAKED_AT_START */
+const BAKED_AT=0;
+/* BAKED_AT_END */
+
+/* ITEMS_DATA_START */
 let items=[
   {id:0,name:'Multihand Black Jack',type:'Fast Game',color:'#e74c3c',icon:'🃏',status:'Committed',size:'XL',epicId:'GX-13746',epicUrl:'https://dg-group.atlassian.net/browse/GX-13746',desc:'Multi-hand blackjack fast game.',scope:'Deliver a complete multi-hand blackjack game.',kickoff:{date:'',facilitator:'',attendees:'',notes:''},released:false,releaseDate:'',team:[],risks:[{desc:'BE delivery delay',impact:'high',status:'open',owner:'Tech Lead',mitigation:'Escalate by Sprint 4'},{desc:'Scope creep',impact:'medium',status:'mitigated',owner:'Design Lead',mitigation:'Scope locked v1.2'}],phases:mkPhases(),actions:null},
   ...[{id:1,name:'Tower Rush 2',type:'Slot Game',color:'#7b68ee',icon:'🗼',size:'XL'},{id:2,name:'Fruity Lines',type:'Slot Game',color:'#f6a623',icon:'🍓',size:'L'},{id:3,name:'Wonder Forest',type:'Slot Game',color:'#27ae60',icon:'🌲',size:'XL'},{id:4,name:'Wingo',type:'Fast Game',color:'#0077b6',icon:'🎯',size:'L'},{id:5,name:'Ice Fish',type:'Slot Game',color:'#16a085',icon:'🐟',size:'L'},{id:6,name:'Gift Box',type:'Promo Tool',color:'#c0392b',icon:'🎁',size:'M'},{id:7,name:'Double Approval',type:'BO',color:'#8e44ad',icon:'✅',size:'M'},{id:8,name:'Related Changes',type:'BO',color:'#2980b9',icon:'🔗',size:'M'}].map(x=>({...x,status:'Committed',epicId:'',epicUrl:'',desc:'',scope:'',kickoff:{date:'',facilitator:'',attendees:'',notes:''},released:false,releaseDate:'',team:[],risks:[],phases:defPhases(),actions:null}))
 ];
+/* ITEMS_DATA_END */
 items.forEach(it=>{if(!it.actions)it.actions=mkActions(it.phases);});
 
 // ── LOCALSTORAGE PERSISTENCE ──────────────────────────────────────────────────
-function saveItems(){try{localStorage.setItem('gx_roadmap_v1',JSON.stringify(items));}catch(e){}}
+function saveItems(){try{localStorage.setItem('gx_roadmap_v1',JSON.stringify({items,savedAt:Date.now()}));}catch(e){}}
 let _saveTimer=null;
 function schedSave(){clearTimeout(_saveTimer);_saveTimer=setTimeout(saveItems,400);}
 (function loadSaved(){
@@ -538,18 +580,25 @@ function schedSave(){clearTimeout(_saveTimer);_saveTimer=setTimeout(saveItems,40
     const raw=localStorage.getItem('gx_roadmap_v1');
     if(!raw)return;
     const parsed=JSON.parse(raw);
-    if(!Array.isArray(parsed)||!parsed.length)return;
-    items=parsed;
+    // Support both old format (array) and new format ({items, savedAt})
+    const savedAt=parsed.savedAt||0;
+    const savedItems=Array.isArray(parsed)?parsed:(parsed.items||[]);
+    // If the HTML file was saved more recently than the localStorage data, use the baked-in data
+    if(BAKED_AT>0&&savedAt<=BAKED_AT)return;
+    if(!savedItems.length)return;
+    items=savedItems;
     items.forEach(it=>{if(!it.actions)it.actions=mkActions(it.phases);});
   }catch(e){}
 })();
 
 // ── ROADMAP META (editable titles) ───────────────────────────────────────────
+/* META_DATA_START */
 let roadmapMeta={
   roadmap:{navName:'Q3/26 Roadmap',heading:'✦ Galaxsys Q3/26 Roadmap',subtitle:'May 2026 – Feb 2027 · All committed projects',sectionTitle:'All Projects'},
   tech:{navName:'Q3/26 Technical Roadmap',heading:'⚙ Galaxsys Q3/26 Technical Roadmap',subtitle:'Technical projects & infrastructure',sectionTitle:'All Projects'}
 };
-function saveRoadmapData(){try{localStorage.setItem('gx_roadmap_meta_v1',JSON.stringify(roadmapMeta));}catch(e){}}
+/* META_DATA_END */
+function saveRoadmapData(){try{localStorage.setItem('gx_roadmap_meta_v1',JSON.stringify({...roadmapMeta,_savedAt:Date.now()}));}catch(e){}}
 function saveRoadmapMeta(section,field,val){if(!val||!roadmapMeta[section])return;roadmapMeta[section][field]=val;if(section===activeSection&&field==='navName'){document.getElementById('topTitle').textContent=val;document.getElementById('homeBCText').textContent=val;}saveRoadmapData();}
 function renameRoadmapNav(section){
   const labelId=section==='tech'?'navTechParentLabel':'navParentLabel';
@@ -572,7 +621,7 @@ function renameRoadmapNav(section){
   el.addEventListener('blur',commit,{once:true});
   el.addEventListener('keydown',onKey);
 }
-(function loadRoadmapMeta(){try{const raw=localStorage.getItem('gx_roadmap_meta_v1');if(!raw)return;const p=JSON.parse(raw);Object.keys(roadmapMeta).forEach(k=>{if(p[k])roadmapMeta[k]={...roadmapMeta[k],...p[k]};});}catch(e){}})();
+(function loadRoadmapMeta(){try{const raw=localStorage.getItem('gx_roadmap_meta_v1');if(!raw)return;const p=JSON.parse(raw);const savedAt=p._savedAt||0;if(BAKED_AT>0&&savedAt<=BAKED_AT)return;Object.keys(roadmapMeta).forEach(k=>{if(p[k])roadmapMeta[k]={...roadmapMeta[k],...p[k]};});}catch(e){}})();
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 function parseDate(s){if(!s)return null;const[y,m,d]=s.split('-');return new Date(+y,+m-1,+d);}
@@ -1498,6 +1547,102 @@ function saveNewItem(){
   items.push({id:Date.now(),name,type:document.getElementById('m-type').value,color:document.getElementById('m-color').value,icon:document.getElementById('m-icon').value||'🎮',status:'Committed',size:document.getElementById('m-size').value,epicId:eid,epicUrl:eid?`https://dg-group.atlassian.net/browse/${eid}`:'',desc:document.getElementById('m-desc').value,scope:'',kickoff:{date:'',facilitator:'',attendees:'',notes:''},released:false,releaseDate:'',team:[],risks:[],phases,actions:mkActions(phases),section:_sec});
   closeModal();refreshHome();['m-name','m-epic','m-desc'].forEach(id=>document.getElementById(id).value='');resetIconPicker();schedSave();
 }
+// ── GITHUB INTEGRATION ───────────────────────────────────────────────────────
+function openGHModal(){
+  const s=k=>localStorage.getItem(k)||'';
+  document.getElementById('gh-token').value=s('gh_token');
+  document.getElementById('gh-owner').value=s('gh_owner');
+  document.getElementById('gh-repo').value=s('gh_repo');
+  document.getElementById('gh-path').value=s('gh_path');
+  document.getElementById('gh-branch').value=s('gh_branch')||'main';
+  document.getElementById('ghModalErr').style.display='none';
+  document.getElementById('ghModal').style.display='flex';
+}
+function closeGHModal(){document.getElementById('ghModal').style.display='none';}
+function saveGHSettings(){
+  const v=id=>document.getElementById(id).value.trim();
+  const err=document.getElementById('ghModalErr');
+  if(!v('gh-token')||!v('gh-owner')||!v('gh-repo')||!v('gh-path')){
+    err.textContent='Please fill in all fields.';err.style.display='block';return;
+  }
+  ['gh_token','gh_owner','gh_repo','gh_path','gh_branch'].forEach(k=>{
+    localStorage.setItem(k,document.getElementById(k.replace('gh_','gh-')).value.trim()||'main');
+  });
+  closeGHModal();
+  setGHStatus('ok','Settings saved');
+  setTimeout(()=>document.getElementById('ghStatus').style.display='none',2500);
+}
+function setGHStatus(type,msg){
+  const el=document.getElementById('ghStatus');
+  el.className='gh-status '+type;el.textContent=msg;el.style.display='inline';
+}
+function buildPageHTML(){
+  const ts=Date.now();
+  const safe=s=>s.replace(/<\/script>/gi,'<\\/script>');
+  let html=document.documentElement.outerHTML;
+  html=html.replace(/\/\* BAKED_AT_START \*\/[\s\S]*?\/\* BAKED_AT_END \*\//,
+    `/* BAKED_AT_START */\nconst BAKED_AT=${ts};\n/* BAKED_AT_END */`);
+  html=html.replace(/\/\* ITEMS_DATA_START \*\/[\s\S]*?\/\* ITEMS_DATA_END \*\//,
+    `/* ITEMS_DATA_START */\nlet items=${safe(JSON.stringify(items))};\n/* ITEMS_DATA_END */`);
+  html=html.replace(/\/\* META_DATA_START \*\/[\s\S]*?\/\* META_DATA_END \*\//,
+    `/* META_DATA_START */\nlet roadmapMeta=${safe(JSON.stringify(roadmapMeta))};\n/* META_DATA_END */`);
+  return html;
+}
+async function publishToGitHub(btn){
+  const token=localStorage.getItem('gh_token');
+  const owner=localStorage.getItem('gh_owner');
+  const repo=localStorage.getItem('gh_repo');
+  const path=localStorage.getItem('gh_path');
+  const branch=localStorage.getItem('gh_branch')||'main';
+  if(!token||!owner||!repo||!path){openGHModal();return;}
+
+  btn.disabled=true;btn.textContent='⏳ Publishing…';
+  setGHStatus('busy','Connecting…');
+  try{
+    const apiBase=`https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    const headers={'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
+
+    // 1. Get current file SHA
+    setGHStatus('busy','Fetching file…');
+    const getRes=await fetch(`${apiBase}?ref=${branch}`,{headers});
+    if(!getRes.ok){
+      const e=await getRes.json();
+      throw new Error(e.message||`GitHub API error ${getRes.status}`);
+    }
+    const fileData=await getRes.json();
+    const sha=fileData.sha;
+
+    // 2. Build updated HTML and encode as base64 (UTF-8 safe)
+    setGHStatus('busy','Encoding…');
+    const html=buildPageHTML();
+    const bytes=new TextEncoder().encode(html);
+    let bin='';bytes.forEach(b=>bin+=String.fromCharCode(b));
+    const b64=btoa(bin);
+
+    // 3. Commit to GitHub
+    setGHStatus('busy','Pushing…');
+    const putRes=await fetch(apiBase,{method:'PUT',headers,body:JSON.stringify({
+      message:`Update roadmap – ${new Date().toLocaleString()}`,
+      content:b64,sha,branch
+    })});
+    if(!putRes.ok){
+      const e=await putRes.json();
+      throw new Error(e.message||`Commit failed (${putRes.status})`);
+    }
+    setGHStatus('ok','✓ Published! Refresh to see changes.');
+    setTimeout(()=>document.getElementById('ghStatus').style.display='none',5000);
+  }catch(err){
+    setGHStatus('err','✗ '+err.message);
+    console.error('GitHub publish error:',err);
+  }finally{
+    btn.disabled=false;btn.textContent='⬆ Publish';
+  }
+}
+// Load GitHub settings on startup (show indicator if configured)
+(function(){if(localStorage.getItem('gh_token')&&localStorage.getItem('gh_repo')){
+  setGHStatus('ok','GitHub connected');
+  setTimeout(()=>document.getElementById('ghStatus').style.display='none',2000);
+}})();
 function goBack(){showHome(curItem?curItem.section:activeSection);}
 document.addEventListener('click',function(e){const p=document.getElementById('iconPopover');if(p&&p.classList.contains('open')&&!p.contains(e.target)&&e.target.id!=='iconTrigger')p.classList.remove('open');});
 </script>
